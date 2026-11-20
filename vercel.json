@@ -1,23 +1,15 @@
 {
     "$schema": "https://openapi.vercel.sh/vercel.json",
     "version": 2,
-    "framework": null,
-    "buildCommand": null,
     "functions": {
         "api/index.php": {
-            "runtime": "vercel-php@0.8.0"
-        },
-        "api/diag.php": {
-            "runtime": "vercel-php@0.8.0"
-        },
-        "api/ping.php": {
             "runtime": "vercel-php@0.8.0"
         }
     },
     "rewrites": [
         {
             "source": "/(.*)",
-            "destination": "/api/diag.php"
+            "destination": "/api/index.php"
         }
     ]
 }
