@@ -13,6 +13,10 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  * sans jamais prendre deux fois le même article : la boutique de démo
  * contient donc 20 produits différents, comme une vraie boutique.
  *
+ * L'usine pioche dans le catalogue DANS L'ORDRE, sans utiliser Faker :
+ * le remplissage donne donc toujours exactement la même boutique,
+ * y compris sur un hébergement où Faker n'est pas installé.
+ *
  * Commande qui génère ce fichier :
  *   php artisan make:factory ProduitFactory --model=Produit
  *
@@ -59,21 +63,32 @@ class ProduitFactory extends Factory
     ];
 
     /**
+     * Les stocks de démonstration, dans le même ordre que le catalogue
+     * (le 0 donne un produit en rupture de stock, pour la démo).
+     */
+    private const STOCKS = [12, 30, 8, 25, 40, 0, 18, 22, 9, 35, 14, 27, 6, 19, 44, 11, 31, 16, 28, 21];
+
+    /** Position du prochain article à fabriquer dans le catalogue. */
+    private static int $position = 0;
+
+    /**
      * L'état par défaut d'un produit fabriqué par l'usine.
-     * unique() garantit qu'un même article du catalogue n'est
-     * jamais tiré deux fois pendant le remplissage.
+     * Les articles sont pris un par un, dans l'ordre du catalogue :
+     * aucun doublon, et le résultat est identique à chaque remplissage.
      */
     public function definition(): array
     {
-        $article = $this->faker->unique()->randomElement(self::CATALOGUE);
+        $rang = self::$position % count(self::CATALOGUE);
+        self::$position++;
+
+        $article = self::CATALOGUE[$rang];
 
         return [
             'nom'          => $article['nom'],
             'description'  => $article['description'],
             'prix'         => $article['prix'],
             'categorie_id' => $article['categorie_id'],
-            // Un stock plausible pour la démo (parfois 0 : rupture de stock).
-            'stock'        => $this->faker->numberBetween(0, 50),
+            'stock'        => self::STOCKS[$rang],
         ];
     }
 }
