@@ -71,3 +71,29 @@ Compte de démonstration uniquement, mot de passe stocké haché (bcrypt) : ne j
 ## Contexte
 
 Application réalisée dans le cadre de l'exposé de groupe « Laravel, le framework PHP pour artisans du web » — IFRI, Université d'Abomey-Calavi (Bénin).
+
+## L'équipe du projet
+
+Ce projet a été réalisé par un groupe de cinq étudiants de l'IFRI :
+
+- **LOKOSSOU John Elie**
+- **AMEHO Fifamè Grâce**
+- **SOSSOU Almira Davina Oluwatoyi**
+- **DINLA Marcel**
+- **DJIMENOU Onésime**
+
+## Remerciements
+
+Un merci spécial à toute l'équipe : ce projet est le fruit d'un vrai travail collectif, où chacune et chacun a apporté sa part, ses idées et son énergie, du premier chapitre jusqu'à la dernière ligne de code. C'est ensemble que nous avons transformé un sujet de cours en une application qui fonctionne pour de vrai.
+
+Merci à chacune et à chacun, personnellement :
+
+- Merci à **John Elie** pour son engagement sans relâche et sa volonté de toujours aller au bout des choses.
+- Merci à **Fifamè Grâce** pour sa rigueur et la qualité constante de son travail.
+- Merci à **Almira Davina Oluwatoyi** pour son sérieux et sa contribution précieuse à l'avancement du groupe.
+- Merci à **Marcel** pour sa disponibilité et son esprit d'équipe tout au long du projet.
+- Merci à **Onésime** pour sa participation active et sa bonne humeur communicative.
+
+Nos remerciements vont également à notre enseignant, **Monsieur OUSMANE Matine**, pour son encadrement, ses enseignements et la confiance accordée à notre groupe tout au long de cet exposé.
+
+Merci enfin à l'IFRI et à l'Université d'Abomey-Calavi pour le cadre d'apprentissage qui a rendu ce travail possible.
