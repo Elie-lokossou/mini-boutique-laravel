@@ -27,6 +27,7 @@
         .detail .prix { font-size: 24px; }
         .vide { background: #fff; border-radius: 10px; padding: 24px; text-align: center; }
         code { background: #eef1f6; padding: 2px 6px; border-radius: 4px; }
+        footer { text-align: center; font-size: 12.5px; color: #5b6472; padding: 4px 16px 28px; }
     </style>
 </head>
 <body>
@@ -39,5 +40,9 @@
         {{-- Chaque page remplit cette zone avec @section('contenu') --}}
         @yield('contenu')
     </main>
+
+    <footer>
+        Projet réalisé par LOKOSSOU John Elie, AMEHO Fifamè Grâce, SOSSOU Almira Davina Oluwatoyi, DINLA Marcel et DJIMENOU Onésime — IFRI, Université d'Abomey-Calavi
+    </footer>
 </body>
 </html>

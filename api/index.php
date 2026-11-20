@@ -1,0 +1,93 @@
+<?php
+
+use Illuminate\Contracts\Console\Kernel as ConsoleKernel;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
+
+/*
+|--------------------------------------------------------------------------
+| Point d'entrée serverless (Vercel)
+|--------------------------------------------------------------------------
+|
+| Vercel ne fait pas tourner PHP nativement : ce fichier est la fonction
+| serverless (runtime communautaire vercel-php) qui reçoit toutes les
+| requêtes et les transmet à Laravel, comme le ferait public/index.php
+| sur un hébergement classique.
+|
+| Le système de fichiers d'une fonction serverless est en lecture seule,
+| sauf /tmp. On y place donc tout ce que Laravel doit pouvoir écrire :
+| la base SQLite, les vues Blade compilées et les dossiers de travail.
+|
+*/
+
+define('LARAVEL_START', microtime(true));
+
+// Dossiers inscriptibles dans /tmp (vues compilées, cache, sessions, logs).
+foreach ([
+    '/tmp/views',
+    '/tmp/storage/framework/cache/data',
+    '/tmp/storage/framework/sessions',
+    '/tmp/storage/framework/views',
+    '/tmp/storage/logs',
+    '/tmp/storage/app/public',
+] as $directory) {
+    if (! is_dir($directory)) {
+        mkdir($directory, 0777, true);
+    }
+}
+
+// Valeurs par défaut adaptées au serverless. Les variables d'environnement
+// définies dans le projet Vercel (APP_KEY, APP_ENV...) ont toujours priorité.
+$defaults = [
+    'DB_CONNECTION' => 'sqlite',
+    'DB_DATABASE' => '/tmp/database.sqlite',
+    'SESSION_DRIVER' => 'cookie',
+    'CACHE_STORE' => 'array',
+    'QUEUE_CONNECTION' => 'sync',
+    'LOG_CHANNEL' => 'stderr',
+    'VIEW_COMPILED_PATH' => '/tmp/views',
+];
+
+foreach ($defaults as $key => $value) {
+    if (empty($_SERVER[$key]) && empty($_ENV[$key]) && getenv($key) === false) {
+        $_SERVER[$key] = $_ENV[$key] = $value;
+        putenv("{$key}={$value}");
+    }
+}
+
+// Mode maintenance (même vérification que public/index.php).
+if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+    require $maintenance;
+}
+
+// Register the Composer autoloader...
+require __DIR__.'/../vendor/autoload.php';
+
+// Bootstrap Laravel...
+/** @var \Illuminate\Foundation\Application $app */
+$app = require __DIR__.'/../bootstrap/app.php';
+
+// Démarrage à froid : la base SQLite de /tmp est éphémère. Si elle n'existe
+// pas encore (ou si les tables manquent), on la crée et on la remplit avec
+// les migrations et les seeders : la boutique repart avec ses 20 produits.
+try {
+    $databasePath = $_SERVER['DB_DATABASE'] ?? '/tmp/database.sqlite';
+
+    if (! file_exists($databasePath)) {
+        touch($databasePath);
+    }
+
+    $app->make(ConsoleKernel::class)->bootstrap();
+
+    if (! Schema::hasTable('produits')) {
+        Artisan::call('migrate:fresh', ['--seed' => true, '--force' => true]);
+    }
+} catch (\Throwable $e) {
+    // Ne pas bloquer la requête : l'erreur éventuelle sera visible
+    // dans les logs d'exécution de la fonction.
+    error_log('Mini-Boutique — initialisation de la base : '.$e->getMessage());
+}
+
+// Répondre à la requête HTTP.
+$app->handleRequest(Request::capture());
