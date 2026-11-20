@@ -1,17 +1,5 @@
 <?php
 
-// [DIAGNOSTIC TEMPORAIRE] Rendre toute erreur visible dans la réponse,
-// y compris les erreurs fatales qui échappent aux gestionnaires habituels.
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-error_reporting(E_ALL);
-register_shutdown_function(function () {
-    $error = error_get_last();
-    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
-        echo "\nERREUR FATALE : {$error['message']} dans {$error['file']} ligne {$error['line']}";
-    }
-});
-
 use Illuminate\Contracts\Console\Kernel as ConsoleKernel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -114,10 +102,4 @@ try {
 }
 
 // Répondre à la requête HTTP.
-try {
-    $app->handleRequest(Request::capture());
-} catch (\Throwable $e) {
-    // [DIAGNOSTIC TEMPORAIRE] Afficher l'exception qui a traversé Laravel.
-    echo "\nEXCEPTION : ".get_class($e).' — '.$e->getMessage().' dans '.$e->getFile().' ligne '.$e->getLine();
-    throw $e;
-}
+$app->handleRequest(Request::capture());
