@@ -8,15 +8,19 @@ Ce projet est l'application pratique de notre **exposé de groupe sur Laravel** 
 
 ## Ce que fait l'application
 
-- **Côté visiteur** : page d'accueil avec le catalogue (20 produits), page détail de chaque produit, prix affichés en FCFA et stock visible.
-- **Côté administrateur** : connexion sécurisée, tableau de bord, liste des produits, formulaire de création et de modification avec validation en français, suppression.
+- **Côté visiteur** : accueil avec produits à découvrir et chiffres du catalogue, recherche, filtres par catégorie et stock, tri, pagination, fiches détaillées et prix en FCFA.
+- **Panier** : ajout, mise à jour et retrait d'articles avec quantité vérifiée selon le stock. Le panier est stocké dans la session Laravel. La validation de commande est simulée : aucun paiement ni enregistrement de commande n'est effectué.
+- **Côté administrateur** : espace protégé, indicateurs du catalogue, alertes de stock, liste paginée, CRUD des produits, validation en français et téléversement local de photos.
+- **Interface** : vues Blade, CSS intégré au layout et SVG locaux. Aucun framework front-end ni bibliothèque d'interface externe.
 - **Données de démonstration** : une factory génère 20 produits français en FCFA et les seeders remplissent la base en une commande.
 
 Pages principales, une fois l'application lancée :
 
 - `/` → le catalogue public (20 produits, catégories, prix en FCFA, stock)
 - `/produits/3` → le détail d'un produit
+- `/panier` → le panier de démonstration
 - `/login` → la page de connexion
+- `/admin` → le tableau de bord (connexion obligatoire)
 - `/admin/produits` → l'espace admin (connexion obligatoire)
 
 ## Les 10 notions Laravel démontrées
@@ -24,9 +28,9 @@ Pages principales, une fois l'application lancée :
 | # | Notion | Où la voir dans le projet |
 |---|---|---|
 | 1 | Installation | Projet Laravel (PHP 8.2+, Composer), base SQLite |
-| 2 | Routage | `routes/web.php` : routes publiques et routes admin protégées |
-| 3 | Contrôleurs | `ProduitController` (index, show + CRUD admin) |
-| 4 | Blade | `resources/views/` : layout boutique, vues produits et admin, composants |
+| 2 | Routage | `routes/web.php` : catalogue, panier et routes admin protégées |
+| 3 | Contrôleurs | `ProduitController` (catalogue, recherche, détail et CRUD) et `PanierController` |
+| 4 | Blade | `resources/views/` : layout boutique, catalogue, panier et administration |
 | 5 | Migrations | `database/migrations/` : tables `categories` et `produits`, puis ajout de la colonne `stock` par une migration séparée |
 | 6 | Eloquent | Modèles `Produit` et `Categorie`, relations `belongsTo` / `hasMany` |
 | 7 | Formulaires et validation | Formulaire produit, règles de validation et messages d'erreur en français |
@@ -50,6 +54,7 @@ php artisan key:generate
 # Base de données SQLite (déjà configurée dans .env.example)
 touch database/database.sqlite
 php artisan migrate --seed
+php artisan storage:link
 
 php artisan serve
 ```
@@ -57,6 +62,8 @@ php artisan serve
 L'application est alors accessible sur http://127.0.0.1:8000
 
 Pour repartir de zéro à tout moment : `php artisan migrate:fresh --seed`
+
+Les images envoyées par l'administration sont stockées dans `storage/app/public/produits`. La commande `php artisan storage:link` rend ces fichiers accessibles depuis les pages du catalogue.
 
 Si les pages de connexion s'affichent sans style, régénérer les assets de Breeze avec `npm install && npm run build`.
 

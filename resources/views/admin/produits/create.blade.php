@@ -9,7 +9,7 @@
     <a class="lien" href="{{ route('admin.produits.index') }}">← Retour à la liste admin</a>
     <h1 style="margin-top:12px;">Ajouter un produit</h1>
 
-    <form method="POST" action="{{ route('admin.produits.store') }}">
+    <form method="POST" action="{{ route('admin.produits.store') }}" enctype="multipart/form-data">
         @csrf
         @include('admin.produits._form', ['bouton' => 'Ajouter le produit'])
     </form>

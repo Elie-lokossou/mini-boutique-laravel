@@ -6,6 +6,7 @@ use App\Models\Categorie;
 use App\Models\Produit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 // Le contrôleur fait le lien entre les routes (les adresses) et les
@@ -20,13 +21,60 @@ class ProduitController extends Controller
      * produits : sans lui, afficher 20 produits lancerait 21 requêtes
      * (le problème « N+1 » du chapitre 6). Avec lui : 2 requêtes.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $produits = Produit::with('categorie')
-            ->orderBy('nom')
-            ->get();
+        $categories = Categorie::withCount('produits')->orderBy('nom')->get();
+        $requete = Produit::with('categorie');
+        $recherche = trim((string) $request->query('q', ''));
+        $categorieId = $request->integer('categorie');
+        $disponibilite = $request->query('disponibilite', '');
+        $tri = $request->query('tri', 'nom');
 
-        return view('produits.index', compact('produits'));
+        if ($recherche !== '') {
+            $requete->where(function ($sousRequete) use ($recherche) {
+                $sousRequete->where('nom', 'like', "%{$recherche}%")
+                    ->orWhere('description', 'like', "%{$recherche}%");
+            });
+        }
+
+        if ($categorieId > 0) {
+            $requete->where('categorie_id', $categorieId);
+        }
+
+        if ($disponibilite === 'disponible') {
+            $requete->where('stock', '>', 0);
+        } elseif ($disponibilite === 'rupture') {
+            $requete->where('stock', 0);
+        }
+
+        match ($tri) {
+            'prix_croissant' => $requete->orderBy('prix'),
+            'prix_decroissant' => $requete->orderByDesc('prix'),
+            'recent' => $requete->latest(),
+            default => $requete->orderBy('nom'),
+        };
+
+        $produits = $requete->paginate(8)->withQueryString();
+        $produitMisEnAvant = Produit::with('categorie')
+            ->where('stock', '>', 0)
+            ->orderByDesc('created_at')
+            ->first();
+        $statistiques = [
+            'produits' => Produit::count(),
+            'categories' => Categorie::count(),
+            'disponibles' => Produit::where('stock', '>', 0)->count(),
+        ];
+
+        return view('produits.index', compact(
+            'produits',
+            'categories',
+            'recherche',
+            'categorieId',
+            'disponibilite',
+            'tri',
+            'produitMisEnAvant',
+            'statistiques'
+        ));
     }
 
     /**
@@ -57,9 +105,33 @@ class ProduitController extends Controller
     {
         $produits = Produit::with('categorie')
             ->orderBy('nom')
+            ->paginate(10);
+        $statistiques = [
+            'produits' => Produit::count(),
+            'disponibles' => Produit::where('stock', '>', 0)->count(),
+            'ruptures' => Produit::where('stock', 0)->count(),
+            'categories' => Categorie::count(),
+        ];
+
+        return view('admin.produits.index', compact('produits', 'statistiques'));
+    }
+
+    /** Affiche un aperçu des indicateurs utiles à la démonstration admin. */
+    public function dashboardAdmin(): View
+    {
+        $statistiques = [
+            'produits' => Produit::count(),
+            'disponibles' => Produit::where('stock', '>', 0)->count(),
+            'ruptures' => Produit::where('stock', 0)->count(),
+            'categories' => Categorie::count(),
+        ];
+        $produitsEnAlerte = Produit::with('categorie')
+            ->where('stock', '<=', 5)
+            ->orderBy('stock')
+            ->limit(5)
             ->get();
 
-        return view('admin.produits.index', compact('produits'));
+        return view('admin.dashboard', compact('statistiques', 'produitsEnAlerte'));
     }
 
     /**
@@ -88,6 +160,10 @@ class ProduitController extends Controller
     {
         $donnees = $request->validate(...$this->reglesValidation());
 
+        if ($request->hasFile('image')) {
+            $donnees['image'] = $request->file('image')->store('produits', 'public');
+        }
+
         Produit::create($donnees);
 
         return redirect()
@@ -114,6 +190,14 @@ class ProduitController extends Controller
     {
         $donnees = $request->validate(...$this->reglesValidation());
 
+        if ($request->hasFile('image')) {
+            if ($produit->image) {
+                Storage::disk('public')->delete($produit->image);
+            }
+
+            $donnees['image'] = $request->file('image')->store('produits', 'public');
+        }
+
         $produit->update($donnees);
 
         return redirect()
@@ -128,6 +212,10 @@ class ProduitController extends Controller
      */
     public function destroy(Produit $produit): RedirectResponse
     {
+        if ($produit->image) {
+            Storage::disk('public')->delete($produit->image);
+        }
+
         $produit->delete();
 
         return redirect()
@@ -150,6 +238,7 @@ class ProduitController extends Controller
             'prix'         => ['required', 'numeric', 'min:0'],
             'stock'        => ['required', 'integer', 'min:0'],
             'categorie_id' => ['required', 'exists:categories,id'],
+            'image'        => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
         ];
 
         $messages = [
@@ -159,6 +248,9 @@ class ProduitController extends Controller
             'min'      => 'Le champ :attribute doit être au minimum :min.',
             'max'      => 'Le champ :attribute ne doit pas dépasser :max caractères.',
             'exists'   => 'La catégorie choisie n\'existe pas.',
+            'image'    => 'Le fichier doit être une image valide.',
+            'mimes'    => 'La photo doit être au format JPG, PNG ou WebP.',
+            'max.file' => 'La photo ne doit pas dépasser 3 Mo.',
         ];
 
         $attributs = [

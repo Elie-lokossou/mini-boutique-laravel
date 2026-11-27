@@ -9,7 +9,7 @@
     <a class="lien" href="{{ route('admin.produits.index') }}">← Retour à la liste admin</a>
     <h1 style="margin-top:12px;">Modifier le produit</h1>
 
-    <form method="POST" action="{{ route('admin.produits.update', $produit) }}">
+    <form method="POST" action="{{ route('admin.produits.update', $produit) }}" enctype="multipart/form-data">
         @csrf
         @method('PUT')
         @include('admin.produits._form', ['bouton' => 'Enregistrer les modifications'])
