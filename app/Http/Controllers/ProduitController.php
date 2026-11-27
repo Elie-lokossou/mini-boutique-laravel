@@ -248,6 +248,9 @@ class ProduitController extends Controller
             'min'      => 'Le champ :attribute doit être au minimum :min.',
             'max'      => 'Le champ :attribute ne doit pas dépasser :max caractères.',
             'exists'   => 'La catégorie choisie n\'existe pas.',
+            'image'    => 'Le fichier doit être une image valide.',
+            'mimes'    => 'La photo doit être au format JPG, PNG ou WebP.',
+            'max.file' => 'La photo ne doit pas dépasser 3 Mo.',
         ];
 
         $attributs = [
